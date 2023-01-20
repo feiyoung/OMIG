@@ -1,0 +1,6 @@
+exportPattern("^[[:alpha:]]+")
+
+#export(MIG, OMIG, MIG.default,MIG.data.frame, selectFacNumber, gendata)
+
+S3method("OrMIG","matrix")
+S3method("OrMIG","data.frame")

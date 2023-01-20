@@ -1,0 +1,29 @@
+Package: OMIG
+Type: Package
+Title: Online Missing Value Imputation via Generalized Factor Models
+Version: 0.1.0
+Date: 2023-01-20
+License: GPL-3
+Authors@R: 
+    c(person(given = "Wei",
+             family = "Liu",
+             role = c("aut", "cre"),
+             email = "weiliu@smail.swufe.edu.cn"),
+      person(given = "Lan",
+             family = "Luo",
+             role = "aut"),
+      person(given = "Ling",
+             family = "Zhou",
+             role = "aut"))
+Author: Wei Liu [aut, cre], Guizhen Li [aut], Lan Luo [aut], Ling Zhou [aut]
+Maintainer: Wei Liu <weiliu@smail.swufe.edu.cn>
+Description: Online or static missing value Imputation for high-dimensional mixed-type data via
+      generalized factor models. More details can be referred to Wei Liu, et. al. (2021)<doi:10.1080/01621459.2021.1999818>.
+URL: https://github.com/feiyoung/OMIG
+BugReports: https://github.com/feiyoung/OMIG/issues
+Depends: doSNOW, parallel,  R (>= 3.5.0)
+Imports: MASS, stats
+Suggests: knitr, rmarkdown
+VignetteBuilder: knitr
+Encoding: UTF-8
+RoxygenNote: 7.1.2
