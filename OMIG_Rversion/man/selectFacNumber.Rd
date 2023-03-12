@@ -42,9 +42,8 @@
   q_set <- 3:8
 
   # Select number of factors
-  icMat <- selectFacNumber(dat$Xmis,group, type, q_set=q_set,
-                           parallel = T, verbose=T)
-  rownames(icMat)[which.min(icMat[,'ic'])]
-  rownames(icMat)[which.min(icMat[,'pc'])]
+  hq <- selectFacNumber(dat$Xmis, group, type, q_set=q_set,select_method='ratio_test',
+                      parallel = T, verbose=T)
+
 }
 

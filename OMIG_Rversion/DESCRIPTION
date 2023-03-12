@@ -24,6 +24,9 @@ BugReports: https://github.com/feiyoung/OMIG/issues
 Depends: doSNOW, parallel,  R (>= 3.5.0)
 Imports: MASS, stats
 Suggests: knitr, rmarkdown
+LinkingTo: 
+    Rcpp,
+    RcppArmadillo
 VignetteBuilder: knitr
 Encoding: UTF-8
 RoxygenNote: 7.1.2

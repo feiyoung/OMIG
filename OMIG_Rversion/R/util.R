@@ -80,7 +80,7 @@ ortheH <- function(H){
 normvec <- function(x) sqrt(sum(x^2))
 
 
-##  The normalized absolute error for each type of variables
+##  The normalized absolute error for each types of variables
 NAE <- function(hX, X,Xmis, group){
   hmu <- colMeans(Xmis, na.rm=TRUE)
   Mu <- matrix(hmu, nrow(Xmis), ncol(Xmis), byrow=TRUE)
@@ -125,16 +125,16 @@ single_parallel <- function(func,iterable,varlist=NULL,...){
 }
 
 
-preprocess_data <- function(Xmis, group, type){
+preprocess_data <- function(Xmis, group, types){
 
   ind_set <- unique(group)
   ng <- length(ind_set)
   if(length(setdiff(1:ng, ind_set))>0){
-    stop("ID number of types must match type!")
+    stop("ID number of types must match types!")
   }
 
-  if(ng != length(type)){
-    stop("The number of groups must match with length of type!")
+  if(ng != length(types)){
+    stop("The number of groups must match with length of types!")
   }
   # check zero-variance variables
   stdVec <- apply(Xmis, 2, sd, na.rm=TRUE)
@@ -153,14 +153,14 @@ preprocess_data <- function(Xmis, group, type){
       type_set <- setdiff(type_set, s)
     }
   }
-  type <- type[type_set]
+  types <- types[type_set]
   Xmiss <- Xmis
 
 
   n <- nrow(Xmis)
   type_scale <- list()
   for(s in 1:ng){
-    switch (type[s],
+    switch (types[s],
       poisson = {
         cutoff <- 50
         id_types <- which(group==s)
@@ -169,7 +169,7 @@ preprocess_data <- function(Xmis, group, type){
         if(!is.null(id)){
           Xmis[,id] <- Xmis[,id] / matrix(maxVec[maxVec> cutoff], n, length(id), byrow=TRUE)
         }
-        type_scale[[type[s]]] <- cbind(id, maxVec[maxVec> cutoff])
+        type_scale[[types[s]]] <- cbind(id, maxVec[maxVec> cutoff])
       },
       gaussian = {
         cutoff <- 10
@@ -179,21 +179,21 @@ preprocess_data <- function(Xmis, group, type){
         if(!is.null(id)){
           Xmis[,id] <- Xmis[,id] / matrix(stdVec[stdVec> cutoff], n, length(id), byrow=TRUE)
         }
-        type_scale[[type[s]]] <- cbind(id, stdVec[stdVec> cutoff])
+        type_scale[[types[s]]] <- cbind(id, stdVec[stdVec> cutoff])
       }
     )
 
   }
 
-  return(list(Xmis=Xmis, Xmiss = Xmiss, group=group, type=type, type_scale=type_scale))
+  return(list(Xmis=Xmis, Xmiss = Xmiss, group=group, types=types, type_scale=type_scale))
 }
 
 
-## Find the group based on type
-# find_group <- function(Xdf, type){
+## Find the group based on types
+# find_group <- function(Xdf, types){
 #
 #   p <- ncol(Xdf)
-#   ng <- length(type)
+#   ng <- length(types)
 #   if(ng==1){
 #     group <- rep(1, p)
 #   }
@@ -201,7 +201,7 @@ preprocess_data <- function(Xmis, group, type){
 #     group_type <- rep(NA, p)
 #     id_res <- 1:p
 #     for(k in 1:ng){
-#     switch (type[k],
+#     switch (types[k],
 #           binomial = {
 #             bin.flag1 <- apply(Xdf[,id_res], 2, function(x) length(unique(x))< 10)
 #             bin.flag2 <- apply(Xdf[,id_res], 2, function(x) class(x)%in% c("character", "factor"))

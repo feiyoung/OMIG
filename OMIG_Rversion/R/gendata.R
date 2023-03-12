@@ -169,6 +169,10 @@ gendata <- function(seed=1, n=300, p=50,  type='homonorm', q=6,mis_vec=0.3, rho=
       }
     }
   }
+  types <- c("gaussian", "poisson", "binomial")
+  types <- types[unique(group1)]
+  XmisList <- transferMat2List(Xmis, types, group1)
 
-  return(list(Xmis=Xmis, X=X, Bm0=Bm0, Hm0=Hm0, group=group1))
+
+  return(list(XmisList=XmisList, Xmis=Xmis, X=X,  Bm0=Bm0, Hm0=Hm0, group=group1))
 }

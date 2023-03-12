@@ -290,19 +290,22 @@ parafun1 <- function(q, Xmis, group, type, ...){
 
   return(res)
 }
-selectFacNumber <- function(Xmis,group, type, q_set= 2:10, num_core=5,parallel=TRUE,
+selectFacNumber <- function(Xmis,group, types, select_method=c('ratio_test', 'IC', "PC"), q_set= 2:10,
+                            num_core=5,parallel=TRUE,
                              ...){
   nq <- length(q_set)
-  if(parallel){
-    # require(parallel)
-    if (num_core > 1) {
-      if (num_core > parallel::detectCores()) {
-        warning("selectClustNumber:: the number of cores you're setting is larger than detected cores!")
-        num_core = detectCores()
-      }
-    }
 
-    require(doSNOW)
+  if(select_method=="IC" || select_method=="PC"){
+    if(parallel){
+      # require(parallel)
+      if (num_core > 1) {
+        if (num_core > parallel::detectCores()) {
+          warning("selectClustNumber:: the number of cores you're setting is larger than detected cores!")
+          num_core = detectCores()
+        }
+      }
+
+      require(doSNOW)
       cl <- makeSOCKcluster(num_core)
       registerDoSNOW(cl)
 
@@ -311,59 +314,75 @@ selectFacNumber <- function(Xmis,group, type, q_set= 2:10, num_core=5,parallel=T
       progress <- function(n) setTxtProgressBar(pb, n)
       opts <- list(progress=progress)
       k <- 1
-      icMat <- foreach::foreach(q = 1:nq,.packages= "gfmImpute" ,.options.snow=opts,
-                       .combine='rbind') %dopar% {
-                         # out <- gfmImpute(Xmis, group, type, q_set[q],parallel = FALSE,...)
-                         # out$cvVals
-                         out <- try({
-                           gfmImpute(Xmis, group, type, q_set[q],parallel = FALSE,...)
-                         }, silent = TRUE)
-                         if(class(out) == 'try-error'){
-                           rep(Inf,2)
-                         }else{
+      icMat <- foreach::foreach(q = 1:nq,.packages= "OMIG" ,.options.snow=opts,
+                                .combine='rbind') %dopar% {
+                                  # out <- gfmImpute(Xmis, group, types, q_set[q],parallel = FALSE,...)
+                                  # out$cvVals
+                                  out <- try({
+                                    gfmImpute(Xmis, group, types, q_set[q],parallel = FALSE,...)
+                                  }, silent = TRUE)
+                                  if(class(out) == 'try-error'){
+                                    rep(Inf,2)
+                                  }else{
 
-                           out$cvVals
-                         }
-                       }
+                                    out$cvVals
+                                  }
+                                }
 
       close(pb)
       stopCluster(cl)
-    # }else if(par.type=='parallel'){
-    #
-    #
-    #   cl <- makeCluster(num_core)
-    #   # clusterExport(cl, list("gfmImpute", "updateH"))
-    #   message("Starting parallel computing...")
-    #   clusterCall(cl, function(){
-    #     library(gfmImpute);library(glmnet)
-    #   } )
-    #   # Run
-    #   icMat <- parallel::parSapply(cl, X=q_set, parafun1, Xmis=Xmis, group=group, type=type, ...)
-    #   stopCluster(cl)
-    #   icMat <- t(icMat)
-    # }
-  }else{
-    icMat <- matrix(NA, nq, 2)
-    pb <- txtProgressBar()
-    for(k in 1:nq){
-      out <- try({
-        gfmImpute(Xmis, group, type, q_set[k], ...)
-      }, silent = TRUE)
-      if(class(out) == 'try-error'){
-        res <- rep(Inf,2)
-      }else{
 
-        res <- out$cvVals
+    }else{
+      icMat <- matrix(NA, nq, 2)
+      pb <- txtProgressBar()
+      for(k in 1:nq){
+        out <- try({
+          gfmImpute(Xmis, group, types, q_set[k], ...)
+        }, silent = TRUE)
+        if(class(out) == 'try-error'){
+          res <- rep(Inf,2)
+        }else{
+
+          res <- out$cvVals
+        }
+
+        setTxtProgressBar(pb, k)
+        icMat[k, ] <- res
       }
-
-      setTxtProgressBar(pb, k)
-      icMat[k, ] <- res
+      close(pb)
     }
-    close(pb)
+    colnames(icMat) <- c("IC", 'PC')
+    row.names(icMat) <- paste0("q=", q_set)
+    if(select_method=="IC"){
+      q <- q_set[which.min(icMat[,'IC'])]
+      message('IC criterion estimates the factor number q  as ', q, '. \n')
+    }
+    if(select_method=="PC"){
+      q <- q_set[which.min(icMat[,'PC'])]
+      message('IC criterion estimates the factor number q  as ', q, '. \n')
+    }
+
+
+
   }
-  colnames(icMat) <- c("ic", 'pc')
-  row.names(icMat) <- paste0("q=", q_set)
-  return(icMat)
+
+  if(select_method == 'ratio_test'){
+    q_max <- max(q_set)
+    resmisList <- OrMIG(Xmis, group, types, q=q_max, ...)
+
+
+    svalues <- svd(resmisList$fitList$B)$d
+    svalues_use <- svalues[svalues>1e-2]
+    if(length(svalues_use)<2) svalues_use <- svalues[1:2]
+    q_max <- length(svalues_use)
+
+    q <- which.max(svalues[-q_max] / svalues[-1])
+
+    message('Eigevalue ratio test estimates the factor number q  as ', q, '. \n')
+  }
+
+
+  return(q)
 
 }
 
