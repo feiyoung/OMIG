@@ -112,6 +112,9 @@ OrMIG_vb.fit <- function(XList, types, q, offset=FALSE, epsELBO=1e-5, maxIter=30
                          B_int, mu_int, Mu_h_int, S_h_int, Sigma_h_int, epsELBO=epsELBO, maxIter=maxIter,
                          verbose=verbose)
 
+  tmp_list <- transferList2Mat(XList, types)
+  Xmis <- tmp_list$Xmis; group <- tmp_list$group
+  rm(tmp_list)
   ng <- length(types)
   gcell <- list()
   for (j in 1:ng) {
@@ -127,21 +130,23 @@ OrMIG_vb.fit <- function(XList, types, q, offset=FALSE, epsELBO=1e-5, maxIter=30
   hBm <- cbind(as.vector(reslist$mu), reslist$B)
 
   ## try
-  hhB <- NULL
-  for (j in 1:ng) {
-    B1 <- localupdateB2(Xmis, gcell[[j]], hHm[, -1],
-                        types[j], FALSE, 0)
-    hhB <- cbind(hhB, B1)
-  }
-  hBm <- t(hhB)
-  hHm <- updateH(Xmis, hBm, hHm, gcell, types, FALSE, 0)
-  hhB <- NULL
-  for (j in 1:ng) {
-    B1 <- localupdateB2(Xmis, gcell[[j]], hHm[, -1],
-                        types[j], FALSE, 0)
-    hhB <- cbind(hhB, B1)
-  }
-  hBm <- t(hhB)
+  try({
+    hhB <- NULL
+    for (j in 1:ng) {
+      B1 <- localupdateB2(Xmis, gcell[[j]], hHm[, -1],
+                          types[j], FALSE, 0)
+      hhB <- cbind(hhB, B1)
+    }
+    hBm <- t(hhB)
+    hHm <- updateH(Xmis, hBm, hHm, gcell, types, FALSE, 0)
+    hhB <- NULL
+    for (j in 1:ng) {
+      B1 <- localupdateB2(Xmis, gcell[[j]], hHm[, -1],
+                          types[j], FALSE, 0)
+      hhB <- cbind(hhB, B1)
+    }
+    hBm <- t(hhB)
+  }, silent=TRUE)
 
   hD <- hHm %*% t(hBm)
 
@@ -152,9 +157,8 @@ OrMIG_vb.fit <- function(XList, types, q, offset=FALSE, epsELBO=1e-5, maxIter=30
   reslist$mu <- res_idents$mu
 
 
-  tmp_list <- transferList2Mat(XList, types)
-  Xmis <- tmp_list$Xmis; group <- tmp_list$group
-  rm(tmp_list)
+
+
   hX <- Xmis
   for (k in 1:ng) {
     if (types[k] == "gaussian") {
