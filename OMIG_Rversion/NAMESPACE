@@ -2,9 +2,17 @@ exportPattern("^[[:alpha:]]+")
 useDynLib(OMIG, .registration=TRUE)
 importFrom(Rcpp, evalCpp)
 
-#export(MIG, OMIG, MIG.default,MIG.data.frame, selectFacNumber, gendata)
+export(OrMIG, OMIG, OrMIG.default, OrMIG.data.frame, selectFacNumber, gendata)
 
 S3method("OrMIG","matrix")
 S3method("OrMIG","data.frame")
 S3method("OrMIG","list")
 S3method("OrMIG","default")
+
+importFrom(Matrix, sparseMatrix)
+importFrom(irlba, irlba)
+importFrom(MASS, mvrnorm)
+importFrom("stats", "binomial", "cancor", "cov", "dpois", "gaussian",
+           "glm.fit", "poisson", "rbinom", "rnorm", "rpois", "runif",
+           "var")
+importFrom("utils", "setTxtProgressBar", "txtProgressBar")

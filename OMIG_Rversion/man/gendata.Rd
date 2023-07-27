@@ -8,10 +8,11 @@ gendata(
   seed = 1,
   n = 300,
   p = 50,
-  type = "homonorm",
+  type = c("homonorm", "heternorm", "pois", "bino", "norm_pois", "pois_bino", "npb"),
   q = 6,
   mis_vec = 0.3,
   rho = 1,
+  n_bin = 1,
   mechanism = "MCAR"
 )
 }
@@ -29,6 +30,8 @@ gendata(
 \item{mis_vec}{A real or real vector with values between 0 and 1, the missing rate of each variable.}
 
 \item{rho}{A positive real or postive vector with two components, the magnitude of loading matrix.}
+
+\item{n_bin}{A positive integer, the number of trails in generating binomial variables, default as 1.}
 
 \item{mechanism}{A string, the missing mechanism.}
 }

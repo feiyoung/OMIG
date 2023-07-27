@@ -93,7 +93,6 @@ save(naeArray, aeArray, file='./resBrainDat/otherMethod_brain_NAE_AE.Rdata')
 
 
 # Compare OMIG with OfMIG-------------------------------------------------------
-#setwd('/home/ligz/LiuWei_files/OMIG')
 source("./util_funcs.R")
 library(OMIG)
 setwd("./genBrainMatDat")
@@ -105,7 +104,7 @@ q <- 4
 library(gfmImpute)
 library(missMDA)
 group <- dat$group
-X[,group==2] <- X[,group==2] / 10 # scale the raw data for stability
+X[,group==2] <- X[,group==2] 
 N <- 10
 naeArray <- array(NA, dim = c(6,2, N))
 aeArray <- array(NA, dim = c(6,2, N))
@@ -128,6 +127,17 @@ N <- 10
 d <- 2 # two types
 
 MethodNames <- c("OfMIG", "OMIG")
+
+N <- 10
+mis_rate <- 0.3
+jj <- 1
+q <- 4
+n <- nrow(X); p <- ncol(X); type1 = 'norm_pois'
+rho <- 8
+N <- 10
+d <- 2 # two types
+X <- dat$X
+
 
 ##
 idxList <- batchGroup(n, nbatch1=1000, nbatch = 400)
@@ -156,33 +166,31 @@ for(i in 1:N){
     # j <- 2
     idx <- idxList[[j]]
     out <- try({
-      misList <- OrMIG(Xmis[idx,], group, type,q,lambda=lambda, verbose=T,
+      misList <- gfmImpute(Xmis[idx,], group, type,q,lambda=lambda, verbose=T,
                            maxIter=20,epsLogLike=1e-4)
-     
+      
       hX <- misList$hX
       NAE_mat[j, ] <- NAE(hX, X[idxList[[j]],], Xmis[idxList[[j]],], group)
       AE_mat[j, ] <- AE(hX, X[idxList[[j]],], Xmis[idxList[[j]],], group)
       
       
     })
-    errArray[,,1,i] <- NAE_mat
-    AE_errArray[,, 1,i] <- AE_mat
-    out <- try({
-      sList <- dynamicGFMImpute_real(Xmis, q,  group, type, idxList, lambda=lambda,
-                                     verbose=T, X=X)
-    }, silent = T)
     
-    errArray[,,2,i] <- sList$NAE_mat
-    AE_errArray[,, 2,i] <- sList$AE_mat
   }
+  errArray[,,1,i] <- NAE_mat
+  AE_errArray[,, 1,i] <- AE_mat
+  out <- try({
+    sList <- dynamicGFMImpute_real(Xmis, q,  group, type, idxList, lambda=lambda,
+                                   verbose=T, X=X)
+  }, silent = T)
+  
+  errArray[,,2,i] <- sList$NAE_mat
+  AE_errArray[,, 2,i] <- sList$AE_mat
+  
+  # AE(sList$hXall, X, Xmis, group)
 }
 
-
-
-errArray[,,,2]
-apply(errArray, c(1,2,3), mean, na.rm=T)
-apply(AE_errArray, c(1,2,3), mean, na.rm=T)
-save(errArray, AE_errArray, file='./RealData/resBrainDat/AE_dynamic_static_brain_misRate03.Rdata')
+save(AE_errArray, errArray, file='AE_brain76_OMIGvsOfMIG_misrate03.rds' )
 
 
 dynamicGFMImpute_real <- function(Xmis, q,  group, type, idxList, lambda=lambda,

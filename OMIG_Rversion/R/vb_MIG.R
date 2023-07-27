@@ -1,7 +1,7 @@
 
 add_identifiability <- function(H, B, mu){
   # Load the irlba library
-  library(irlba)
+  #library(irlba)
 
   # Perform SVD decomposition with rank k = 10
 
@@ -88,7 +88,7 @@ OrMIG_vb.fit <- function(XList, types, q, offset=FALSE, epsELBO=1e-5, maxIter=30
     rm(AList)
   }
 
-  library(Matrix)
+  #library(Matrix)
   A <- as(A, "sparseMatrix")
 
   Mu_y_int <- NULL
@@ -114,6 +114,7 @@ OrMIG_vb.fit <- function(XList, types, q, offset=FALSE, epsELBO=1e-5, maxIter=30
 
   tmp_list <- transferList2Mat(XList, types)
   Xmis <- tmp_list$Xmis; group <- tmp_list$group
+  Xmis2 <- tmp_list$Xmis;
   rm(tmp_list)
   ng <- length(types)
   gcell <- list()
@@ -159,20 +160,20 @@ OrMIG_vb.fit <- function(XList, types, q, offset=FALSE, epsELBO=1e-5, maxIter=30
 
 
 
-  hX <- Xmis
+  hX <- Xmis2
   for (k in 1:ng) {
     if (types[k] == "gaussian") {
       hX[, group == k] <- hD[, group == k]
     }
     else if (types[k] == "binomial") {
-      N_vec <- apply(Xmis[,group==k], 2,  max, na.rm=TRUE)
+      N_vec <- apply(Xmis2[,group==k], 2,  max, na.rm=TRUE)
       hX[, group == k] <- round(matrix(N_vec, nrow=n, ncol=length(N_vec), byrow = TRUE)/(1 + exp(-hD[, group == k])))
     }
     else if (types[k] == "poisson") {
       hX[, group == k] <- round(exp(hD[, group == k]))
     }
   }
-  hX[!is.na(Xmis)] <- Xmis[!is.na(Xmis)]
+  hX[!is.na(Xmis2)] <- Xmis2[!is.na(Xmis2)]
   return(list(hX = hX, fitList=reslist))
 }
 

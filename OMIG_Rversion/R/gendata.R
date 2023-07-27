@@ -35,14 +35,18 @@ cor.mat <- function (p, rho, type = "toeplitz"){
 #' @param q A positive integer, the number of factors.
 #' @param mis_vec A real or real vector with values between 0 and 1, the missing rate of each variable.
 #' @param rho  A positive real or postive vector with two components, the magnitude of loading matrix.
+#' @param n_bin A positive integer, the number of trails in generating binomial variables, default as 1.
 #' @param mechanism A string, the missing mechanism.
 #'
 #'
 #' @examples
 #' datList <- gendata(seed=1)
 #'
-gendata <- function(seed=1, n=300, p=50,  type='homonorm', q=6,mis_vec=0.3, rho=1, mechanism="MCAR"){
-  #type = {'homonorm', 'heternorm', 'pois', 'norm_pois', 'pois_bino', 'npb'}
+gendata <- function(seed=1, n=300, p=50,
+                    type = c('homonorm', 'heternorm', 'pois', 'bino', 'norm_pois', 'pois_bino', 'npb'),
+                    q=6,mis_vec=0.3, rho=1, n_bin=1,  mechanism="MCAR"){
+  #
+  type <- match.arg(type)
   if(length(rho)==1) rho <- c(rho, 1.5)
   factor_term <- rho[2]
   set.seed(1)
@@ -85,7 +89,7 @@ gendata <- function(seed=1, n=300, p=50,  type='homonorm', q=6,mis_vec=0.3, rho=
     mu1 <-  exp(cbind(1, H0) %*% t(Bm0[g1,]) )
     mu2 <- 1/(1+exp(-cbind(1, H0) %*% t(Bm0[g2,]) ))
     X <- cbind(matrix(rpois(prod(dim(mu1)), mu1), n, ncol(mu1)),
-               matrix(rbinom(prod(dim(mu2)), 1, mu2), n, ncol(mu2)))
+               matrix(rbinom(prod(dim(mu2)), n_bin, mu2), n, ncol(mu2)))
     group1 <- c(rep(1, length(g1)), rep(2, length(g2)))
   }else if(type == 'npb'){
     g1 <- 1:floor(p/3);
@@ -97,11 +101,11 @@ gendata <- function(seed=1, n=300, p=50,  type='homonorm', q=6,mis_vec=0.3, rho=
     mu3 <- 1/(1+exp(-cbind(1, H0) %*% t(Bm0[g3,]) ))
     X <- cbind(matrix(rnorm(prod(dim(mu1)), mu1,1), n, ncol(mu1)),
                matrix(rpois(prod(dim(mu2)), mu2), n, ncol(mu2)),
-               matrix(rbinom(prod(dim(mu3)), 1, mu3), n, ncol(mu3)))
+               matrix(rbinom(prod(dim(mu3)), n_bin, mu3), n, ncol(mu3)))
     group1 <- c(rep(1, length(g1)), rep(2, length(g2)), rep(3, length(g3)))
   }else if (type == 'bino'){
     mu <- 1/(1+ exp(-H0 %*% t(B0) - matrix(mu0, n,p, byrow=T)))
-    X <- matrix(rbinom(n*p,5, prob=mu),n,p)
+    X <- matrix(rbinom(n*p,n_bin, prob=mu),n,p)
     group1 <- c(rep(1, ncol(X)))
   }
   Hm0 <- cbind(1, H0)

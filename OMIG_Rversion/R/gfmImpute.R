@@ -290,7 +290,10 @@ parafun1 <- function(q, Xmis, group, type, ...){
 
   return(res)
 }
-selectFacNumber <- function(Xmis,group, types, select_method=c('ratio_test', 'IC', "PC"), q_set= 2:10,
+
+
+
+selectFacNumber <- function(Xmis,group, types, select_method=c('SVR', 'IC'), q_set= 2:10,
                             num_core=5,parallel=TRUE,
                              ...){
   nq <- length(q_set)
@@ -319,7 +322,7 @@ selectFacNumber <- function(Xmis,group, types, select_method=c('ratio_test', 'IC
                                   # out <- gfmImpute(Xmis, group, types, q_set[q],parallel = FALSE,...)
                                   # out$cvVals
                                   out <- try({
-                                    gfmImpute(Xmis, group, types, q_set[q],parallel = FALSE,...)
+                                    gfmImpute(Xmis, group, types, q_set[q],parallel = FALSE)
                                   }, silent = TRUE)
                                   if(class(out) == 'try-error'){
                                     rep(Inf,2)
@@ -337,7 +340,7 @@ selectFacNumber <- function(Xmis,group, types, select_method=c('ratio_test', 'IC
       pb <- txtProgressBar()
       for(k in 1:nq){
         out <- try({
-          gfmImpute(Xmis, group, types, q_set[k], ...)
+          gfmImpute(Xmis, group, types, q_set[k])
         }, silent = TRUE)
         if(class(out) == 'try-error'){
           res <- rep(Inf,2)
@@ -366,7 +369,7 @@ selectFacNumber <- function(Xmis,group, types, select_method=c('ratio_test', 'IC
 
   }
 
-  if(select_method == 'ratio_test'){
+  if(select_method == 'SVR'){
     q_max <- max(q_set)
     resmisList <- OrMIG(Xmis, group, types, q=q_max, ...)
 
@@ -378,7 +381,7 @@ selectFacNumber <- function(Xmis,group, types, select_method=c('ratio_test', 'IC
 
     q <- which.max(svalues[-q_max] / svalues[-1])
 
-    message('Eigevalue ratio test estimates the factor number q  as ', q, '. \n')
+    message('SVR estimates the factor number q  as ', q, '. \n')
   }
 
 

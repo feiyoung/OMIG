@@ -22,3 +22,6 @@ The function \code{LFM.JMS} imputes missing data using the methods (linear facto
 datList <- gendata(seed=1)
 hX <- LFM.JMS(datList$Xmis, q=4)
 }
+\references{
+Jin, S., Miao, K., and Su, L. (2021). On factor models with random missing: Em estimation, inference, and cross validation. Journal of Econometrics, 222(1):745–777
+}

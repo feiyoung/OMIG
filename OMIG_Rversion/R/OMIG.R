@@ -1,4 +1,5 @@
 
+
 OMIG <- function(Xmis_new, q,  group, type, hist.summary= NULL, lambda=1e-7,
                  verbose=TRUE){
   res <- streamGFMImpute(Xmis_new, q,  group, type, hist.summary= hist.summary, lambda=lambda,

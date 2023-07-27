@@ -1,0 +1,202 @@
+---
+title: 'OMIG: simulation for count and categorical variables'
+author: "Wei Liu"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{OMIG: simulation for count and categorical variables}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+This vignette introduces the `OMIG` workflow for the online or offline missing value imputation for high-dimensional mixed-type data via generalized factor models. The workflow consists of three steps.
+
+* Independent preprocessing and model setting
+* Online or offline missing value Imputation
+* Downstream analysis 
+
+
+We illustrate the application of `OMIG` to a simulated dataset containing mixed-type data, including both count and categorical variables by function `gendata()`.
+
+The package can be loaded with the command:
+```{r  eval = FALSE}
+library(OMIG)
+```
+
+
+## Simulate the mixed data with count and categorical variables
+
+### Model setting and generate data
+First, we set the model setting for generating the mixed-type data with count and categorical variables. The number of factors is set `q=4`, the variable types is set `type <- "pois_bino"`, the sample size of first batch is set `n=100`, the signal stregth is set by `rho=2`, the missing rates for three equal columns of matrix are set `mis_vec= c(0.1, 0.2, 0.3)`. Then, we generate the first data batch.
+```{r  eval = FALSE}
+q <- 4
+type <- "pois_bino"
+n <- 100; p <- 100; rho <- 2; mis_vec <- c(0.1, 0.2, 0.3)
+dat <- gendata(q = q, n=n, p=p, type= type, rho=rho, mis_vec= mis_vec)
+```
+
+We view the data by the following command. We observed each type of variables has p/2 variables. The missing data matrix has two forms: `list()` and `matrix()`. The true intercetp-loading matrix `Bm0` and factor matrices are also presented.
+```{r  eval = FALSE}
+print(str(dat))
+print(dat$XmisList[[1]][1:5,1:10])
+print(dat$XmisList[[2]][1:5,1:10])
+```
+### Online imputation using OMIG
+
+In this example, we assume the number of factors `q` is known. Latter, we will introduce the method to select the number of factors. We use `OMIG` to fit the first data batch. 
+
+* `Xmis_new` is a matrix with mssing values and dimension of n*p(p=(p1+p2+..+pd)),observational mixed-type data matrix, d is the types of variables, pj is the dimension of j-th type of variables.
+
+* `group` is a vector with length equal to p, specify each column of X belonging to which group.
+
+* `type`  is a d-dimensional character vector, specify the type of variables in each group.
+
+* `hist.summary` is a list, including the historical summary statistics to improve the estimation efficiency and imputation accuracy of current data batch. If Xmis_new is the first data batch, then `hist.summary= NULL`.
+
+* `lambda` is a regularization penalty in model fitting, to increase the stability when data include much noise.
+
+* `verbose` is a logical value, whether print the informtion in iteration.
+
+
+
+For more details, users can use `?OMIG` to see the help file to see the meaning of each argument in the function `OMIG()`.  
+```{r  eval = FALSE}
+q <- 4
+group <- dat$group;
+hist.summary= NULL;
+lambda=1;
+verbose=TRUE
+types <- c('poisson', 'binomial')
+## Do not output warnings.
+suppressWarnings(res <- OMIG(Xmis_new=dat$Xmis, q=q,  group=dat$group, type= types, hist.summary= NULL, lambda=lambda,  verbose=T))
+```
+
+### Measure the imputation accuracy
+```{r  eval = FALSE}
+err_omig <- NAE(res$hX, dat$X, dat$Xmis, dat$group)
+```
+
+### Compare with the offline version
+For the offline version of MIG, we design two algorithms: alternate maximization and variational EM, in which VEM is more stable than AM. We apply the two versions to the first data batch. 
+```{r  eval = FALSE}
+## compare with the offline method MIG
+suppressWarnings(res_mig <- OrMIG(dat$Xmis, dat$group, type= types, q, algorithm = 'AM', verbose = F))
+err_am <- NAE(res_mig$hX, dat$X,  dat$Xmis, dat$group)
+
+res_mig <- OrMIG(dat$Xmis, dat$group, type= types, q, algorithm = 'VEM', verbose = F)
+err_vem <- NAE(res_mig$hX, dat$X,  dat$Xmis, dat$group)
+```
+### Compare with the imputation methods based on linear factor models
+We also compare with two other LFM-based methods. Users can use `?LFM.JMS` and `?LFM.XP`
+```{r  eval = FALSE}
+## compare with the offline method MIG
+res_jms <- LFM.JMS(dat$Xmis, q)
+err_jms <- NAE(res_jms, dat$X,  dat$Xmis, dat$group)
+
+res_xp <- LFM.XP(dat$Xmis, q)
+err_xp <- NAE(res_xp, dat$X,  dat$Xmis, dat$group)
+```
+
+We present a visual comparison of the results to evaluate the performance. In the first data batch, OMIG demonstrates equivalency to its offline counterpart, OrMIG. Consequently, the imputation error is nearly identical for both methods. Importantly, both OrMIG and OMIG outperform LFM-based methods. In this case, OrMIG with AM algorithm performs worse than that with VEM algorithm.
+
+```{r  eval = FALSE}
+df <- data.frame(NAE = c(err_omig, err_am, err_vem, err_jms, err_xp), Method=rep(c("OMIG", "AM", "VEM", "LFM-EM", "LFM-PR"), each=2), Type = rep(c("Count", "Binary"), length=10))
+df$Method <- factor(df$Method, levels=c("OMIG", "AM", "VEM", "LFM-EM", "LFM-PR"))
+library(ggplot2)
+ggplot(df, aes(x=Type, y=NAE, fill=Method)) + geom_bar(position = "dodge", stat="identity",width = 0.5)
+```
+
+### Select the number of factors
+First, We apply the Eigevalue ratio test to select the number of factors. We found this method works well and is able to select the correct one.
+```{r  eval = FALSE}
+hq <- selectFacNumber(dat$Xmis, group=group, types=types)
+print(c(q_est=hq, q_true=q))
+```
+Second, we apply the information criterion to select the number of factors. We found this method works well and is also able to select the correct one.
+```{r  eval = FALSE}
+hq <- selectFacNumber(dat$Xmis, group=group, types=types, select_method='IC')
+print(c(q_est=hq, q_true=q))
+```
+
+### Generate data batch 2 and compare the performance
+
+We proceed to simulate the second data batch using the same data generation process, employing a sample size of 40.
+```{r  eval = FALSE}
+n2 <- 40 
+dat <- gendata(q = q, n=n2, p=p, type= type, rho=rho, mis_vec= mis_vec, seed=2)
+```
+
+We employ OMIG (Online Missing Imputation Generator) to fit the model. In this context, it is important to mention that `Xmis_new` represents the newly generated matrix containing missing data, while `hist.summary` corresponds to the summary statistics derived from the first batch of data. The remaining parameters remain unchanged.
+```{r  eval = FALSE}
+res2 <- OMIG(Xmis_new=dat$Xmis, q,  dat$group, types, hist.summary= res$hist.summary, lambda=1, verbose=TRUE)
+err_omig <- NAE(res2$hX, dat$X, dat$Xmis, dat$group)
+```
+
+We utilize the offline version of OMIG by employing the `OrMIG()` function, which solely incorporates the current data batch for model fitting. Subsequently, we calculate the imputation errors. We found the AM algorithm is not stable for this small-sample-size data and produces error.
+```{r  eval = FALSE}
+res_mig <- OrMIG(dat$Xmis, dat$group, types, q, algorithm = "VEM", verbose = F)
+err_vem <- NAE(res_mig$hX, dat$X,  dat$Xmis, dat$group)
+out <- try(res_mig2 <- OrMIG(dat$Xmis, dat$group, types, q, algorithm = "AM", lambda=0.1 ,verbose = T), silent=T)
+str(out)
+err_am <- rep(NA, 2)
+```
+We visualize the results to compare the performance. Upon analyzing the second data batch, we observe that OMIG exhibits significantly lower imputation errors compared to its offline version, OrMIG, because OMIG use the information from the first data batch in the form of sumamry statistics. 
+```{r  eval = FALSE}
+df <- data.frame(NAE = c(err_omig, err_am, err_vem), Method=rep(c("OMIG", "AM", "VEM"), each=2), Type = rep(c("Count", "Binary"), length=6))
+df$Method <- factor(df$Method, levels=c("OMIG", "AM", "VEM"))
+ggplot(df, aes(x=Type, y=NAE, fill=Method)) + geom_bar(position = "dodge", stat="identity",width = 0.5)
+```
+
+
+### Generate data batch 3 and compare the performance
+
+We proceed to simulate the third data batch using the same data generation process, employing a sample size of 50
+```{r  eval = FALSE}
+n2 <- 50
+dat <- gendata(q = q, n=n2, p=p, type= type, rho=rho, mis_vec= mis_vec, seed=100)
+```
+
+We employ OMIG (Online Missing Imputation Generator) to fit the model. In this context, `hist.summary` corresponds to the summary statistics derived from the second batch of data in the `res2$hist.summary`. The remaining parameters remain unchanged.
+```{r  eval = FALSE}
+res3 <- OMIG(Xmis_new=dat$Xmis, q=q,  group=dat$group, types, hist.summary= res2$hist.summary)
+err_omig <- NAE(res3$hX, dat$X, dat$Xmis, dat$group)
+```
+
+We utilize the offline version of OMIG by employing the `OrMIG()` function, which solely incorporates the current data batch for model fitting. Subsequently, we calculate the imputation errors.
+```{r  eval = FALSE}
+res_mig <- OrMIG(dat$Xmis, dat$group, types, q, algorithm = "VEM", verbose = F)
+err_vem <- NAE(res_mig$hX, dat$X,  dat$Xmis, dat$group)
+suppressWarnings(res_mig2 <- OrMIG(dat$Xmis, dat$group, types, q, algorithm = "AM", lambda = 1, verbose = F))
+err_am <-NAE(res_mig2$hX, dat$X,  dat$Xmis, dat$group)
+```
+We present a visual comparison of the results to assess performance. Upon analyzing the second data batch, we observe that OMIG demonstrates significantly lower imputation errors compared to its offline version, OrMIG. This improvement is attributed to OMIG's utilization of information from the first data batch in the form of summary statistics. Additionally, we note that OrMIG with the AM algorithm produces unstable results, with notably large Normalized Absolute Error (NAE) for count variables. Therefore, we recommend employing the offline version of OMIG with the VEM algorithm to impute missing values when using the offline version. Alternatively, for larger sample-size data batches, one may opt to use the offline version with the AM algorithm for imputation.
+```{r  eval = FALSE}
+df <- data.frame(NAE = c(err_omig, err_am, err_vem), Method=rep(c("OMIG", "AM", "VEM"), each=2), Type = rep(c("Count", "Binary"), length=6))
+df$Method <- factor(df$Method, levels=c("OMIG", "AM", "VEM"))
+ggplot(df, aes(x=Type, y=NAE, fill=Method)) + geom_bar(position = "dodge", stat="identity",width = 0.5)
+```
+
+### Downstream analysis
+After finishing missing value imputation, the downstream analysis can be done, such as regression analysis and so on. For example, we conduct the penalized regression analysis by setting the first variable as outcome and the remaining as covariates.
+```{r  eval = FALSE}
+library(glmnet)
+set.seed(1)
+lm1 <- glmnet(x=res3$hX[,-1], y= res3$hX[,1], alpha=0.5)
+plot(lm1)
+```
+
+
+<details>
+<summary>**Session Info**</summary>
+```{r}
+sessionInfo()
+```
+</details>
+
+

@@ -2,7 +2,7 @@
 % Please edit documentation in R/otherMethods.R
 \name{LFM.XP}
 \alias{LFM.XP}
-\title{Missing data imputation using the methods (linear factor models)  in Xiong (2021).}
+\title{Missing data imputation using the methods (linear factor models)  in Xiong (2023).}
 \usage{
 LFM.XP(Xmis, q, prop.weighted = TRUE)
 }
@@ -14,9 +14,12 @@ LFM.XP(Xmis, q, prop.weighted = TRUE)
 \item{prop.weighted}{A logical value, if it is TRUE, the LFM-PR is used, otherwise, the LFM-BR is used.}
 }
 \description{
-The function \code{LFM.JMS} imputes missing data using the methods (linear factor models)  in Jin (2021).
+The function \code{LFM.XP} imputes missing data using the methods (linear factor models)  in Xiong (2023).
 }
 \examples{
 datList <- gendata(seed=1)
 hX <- LFM.XP(datList$Xmis, q=4)
+}
+\references{
+Xiong, R., & Pelger, M. (2023). Large dimensional latent factor modeling with missing observations and applications to causal inference. Journal of Econometrics, 233(1), 271-301.
 }

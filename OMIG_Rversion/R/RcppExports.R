@@ -3,7 +3,7 @@
 
 #' @keywords internal
 #' @noRd
-#' 
+#'
 NULL
 
 VB_OrMIGcpp <- function(XList, typeID, A, Mu_y_int, S_y_int, invLambda_int, B_int, mu_int, Mu_h_int, S_h_int, Sigma_h_int, epsELBO, maxIter, verbose) {

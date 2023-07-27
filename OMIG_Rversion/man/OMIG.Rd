@@ -41,38 +41,55 @@ nothing
 }
 \examples{
 
-## Homogeneous variance normal
-q <- 3
-dat <- gendata(q = q, n=40, p=100, rho=2, mis_vec= c(0.1, 0.2, 0.3))
+# Gaussian data -----------------------------------------------------------
+
+type <- 'heternorm'
+q <- 4
+dat <- gendata(q = q, n=100, p=100, type= type, rho=2, mis_vec= c(0.1, 0.2, 0.3))
+str(dat)
 dat$Xmis[1:5,1:5]
-type <- 'gaussian'
-res <- OMIG(Xmis_new=dat$Xmis, q,  dat$group, type, hist.summary= NULL, lambda=0,
-                       verbose=TRUE)
+Xmis_new <- dat$Xmis;
+group <- dat$group;
+
+hist.summary= NULL;
+lambda=1;
+verbose=TRUE
+types <- 'gaussian'
+res <- OMIG(Xmis_new=dat$Xmis, q,  dat$group, type= types, hist.summary= NULL, lambda=lambda,
+            verbose=TRUE)
 
 NAE(res$hX, dat$X, dat$Xmis, dat$group)
 ## compare with the offline method MIG
-res_mig <- OrMIG(dat$Xmis, dat$group, type, q)
+res_mig <- OrMIG(dat$Xmis, dat$group, type= types, q, algorithm = 'AM', verbose = T)
+NAE(res_mig$hX, dat$X,  dat$Xmis, dat$group)
+
+res_mig <- OrMIG(dat$Xmis, dat$group, type= types, q, algorithm = 'VEM', verbose = T)
 NAE(res_mig$hX, dat$X,  dat$Xmis, dat$group)
 
 ## Batch 2
-dat <- gendata(q = q, n=40, p=100, rho=2, mis_vec= c(0.1, 0.2, 0.3), seed = 2)
-res2 <- streamGFMImpute(Xmis_new=dat$Xmis, q,  dat$group, type, hist.summary= res$hist.summary, lambda=0,
-                       verbose=TRUE)
+dat <- gendata(q = q, n=40, p=100, rho=2,type= type, mis_vec= c(0.1, 0.2, 0.3), seed = 2)
+res2 <- OMIG(Xmis_new=dat$Xmis, q,  dat$group, types, hist.summary= res$hist.summary, lambda=0, verbose=TRUE)
 
 ## Normalized absolute error
 NAE(res2$hX, dat$X, dat$Xmis, dat$group)
 ## compare with the offline method MIG
-res_mig <- OrMIG(dat$Xmis, dat$group, type, q)
+res_mig <- OrMIG(dat$Xmis, dat$group, types, q, algorithm = "VEM", verbose = T)
 NAE(res_mig$hX, dat$X,  dat$Xmis, dat$group)
+res_mig2 <- OrMIG(dat$Xmis, dat$group, types, q, algorithm = "AM", verbose = T)
+NAE(res_mig2$hX, dat$X,  dat$Xmis, dat$group)
 
 ## Batch 3
-dat <- gendata(q = q, n=40, p=100, rho=2, mis_vec= c(0.1, 0.2, 0.3), seed = 5)
-res3 <- OMIG(Xmis_new=dat$Xmis, q,  dat$group, type, hist.summary= res2$hist.summary)
+dat <- gendata(q = q, n=40, p=100, rho=2,type= type, mis_vec= c(0.1, 0.2, 0.3), seed = 5)
+res3 <- OMIG(Xmis_new=dat$Xmis, q,  dat$group, types, hist.summary= res2$hist.summary)
 
 ## Normalized absolute error
 NAE(res3$hX, dat$X, dat$Xmis, dat$group)
 ## compare with the offline method MIG
-res_mig <- OrMIG(dat$Xmis, dat$group, type, q)
+res_mig <- OrMIG(dat$Xmis, dat$group, types, q, verbose = T, algorithm = "VEM")
 NAE(res_mig$hX, dat$X,  dat$Xmis, dat$group)
+res_mig <- OrMIG(dat$Xmis, dat$group, types, q, verbose = T, algorithm = "AM")
+NAE(res_mig$hX, dat$X,  dat$Xmis, dat$group)
+
+
 }
 

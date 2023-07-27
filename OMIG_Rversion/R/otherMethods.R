@@ -10,7 +10,7 @@
 #' @param maxIter A positive integer, the maximum iterations if EM=TRUE.
 #' @param EM  A logical value, if it is TRUE, the LFM-EM is used, otherwise, the LFM-Init is used.
 #'
-#'
+#' @references Jin, S., Miao, K., and Su, L. (2021). On factor models with random missing: Em estimation, inference, and cross validation. Journal of Econometrics, 222(1):745–777
 #' @examples
 #' datList <- gendata(seed=1)
 #' hX <- LFM.JMS(datList$Xmis, q=4)
@@ -47,16 +47,16 @@ LFM.JMS <- function(Xmis, q, maxIter=NULL, EM=TRUE){
 # hX_final[1:4,1:4]
 
 
-#' Missing data imputation using the methods (linear factor models)  in Xiong (2021).
+#' Missing data imputation using the methods (linear factor models)  in Xiong (2023).
 #' @importFrom MASS mvrnorm
 #' @description
-#' The function \code{LFM.JMS} imputes missing data using the methods (linear factor models)  in Jin (2021).
+#' The function \code{LFM.XP} imputes missing data using the methods (linear factor models)  in Xiong (2023).
 #' @export
 #' @param Xmis A n-by-p matrix with missing values, the missing data.
 #' @param q A positive integer, the number of factors.
 #' @param prop.weighted  A logical value, if it is TRUE, the LFM-PR is used, otherwise, the LFM-BR is used.
 #'
-#'
+#' @references Xiong, R., & Pelger, M. (2023). Large dimensional latent factor modeling with missing observations and applications to causal inference. Journal of Econometrics, 233(1), 271-301.
 #' @examples
 #' datList <- gendata(seed=1)
 #' hX <- LFM.XP(datList$Xmis, q=4)
@@ -123,3 +123,4 @@ LFM_impute <- function(Xmis, q, group, type, prop.weighted=TRUE){
 
   return(list(hX=hX, hD = hX, hHm=hHm, hBm=hBm,cvVals=criValue))
 }
+
