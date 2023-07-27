@@ -1,6 +1,5 @@
 clear;
-%cd /home/ligz/LiuWei_files/OMIG
-%cd /home/liuwei/Rfiles/OMIG
+
 addpath(genpath('./OMIGtool'));
 load DLPFC.mat
 Xmis = Dat;
